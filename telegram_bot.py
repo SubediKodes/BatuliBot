@@ -1,5 +1,6 @@
 import os
 import subprocess
+import ctypes
 import pyautogui
 import pygetwindow as gw
 
@@ -56,6 +57,22 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
     resize_keyboard=True,
     is_persistent=True,
 )
+
+# ==========================================
+# WAKE COMPUTER
+# ==========================================
+
+def wake_computer():
+    # Prevent display from sleeping and nudge mouse to dismiss screensaver
+    ES_SYSTEM_REQUIRED  = 0x00000001
+    ES_DISPLAY_REQUIRED = 0x00000002
+    ctypes.windll.kernel32.SetThreadExecutionState(
+        ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
+    )
+    x, y = pyautogui.position()
+    pyautogui.moveTo(x + 1, y + 1, duration=0.1)
+    pyautogui.moveTo(x, y, duration=0.1)
+
 
 # ==========================================
 # SECURITY
@@ -153,6 +170,8 @@ async def call_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     link = CONTACTS[name]
 
+    wake_computer()
+
     try:
         subprocess.Popen([CHROME_PATH, link], shell=False)
         await query.edit_message_text(f"📞 Calling {name}...")
@@ -184,6 +203,8 @@ async def open_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not url.startswith("http"):
         url = "https://" + url
 
+    wake_computer()
+
     try:
         subprocess.Popen([CHROME_PATH, url], shell=False)
         await update.message.reply_text(
@@ -207,6 +228,8 @@ async def tabs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
         await update.message.reply_text("Not allowed.")
         return
+
+    wake_computer()
 
     try:
 
@@ -253,6 +276,8 @@ async def screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Not allowed.")
         return
 
+    wake_computer()
+
     try:
 
         file_path = os.path.join(os.environ["TEMP"], "screenshot.png")
@@ -290,6 +315,8 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=MAIN_KEYBOARD
         )
         return
+
+    wake_computer()
 
     try:
 
@@ -340,6 +367,8 @@ async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not allowed(update):
         await update.message.reply_text("Not allowed.")
         return
+
+    wake_computer()
 
     try:
         os.system("taskkill /F /IM chrome.exe")
@@ -442,6 +471,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         url = text
         if not url.startswith("http"):
             url = "https://" + url
+        wake_computer()
         try:
             subprocess.Popen([CHROME_PATH, url], shell=False)
             await update.message.reply_text(
