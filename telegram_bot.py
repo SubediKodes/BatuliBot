@@ -106,6 +106,12 @@ async def post_init(application):
         BotCommand("whoami",     "Your Telegram ID"),
     ])
 
+    await application.bot.send_message(
+        chat_id=ALLOWED_USER_ID,
+        text="Hello, I am BatuliBot. How can I help you today? ",
+        reply_markup=MAIN_KEYBOARD,
+    )
+
 
 # ==========================================
 # START
