@@ -8,7 +8,7 @@ from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from dotenv import load_dotenv
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, MenuButtonCommands
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -37,9 +37,9 @@ CHROME_PATH = (
 # ==========================================
 
 CONTACTS = {
-    "Mom": "https://m.me/mom.profile",
-    "Dad": "https://m.me/dad.profile",
-    "John": "https://messenger.com/t/john.profile",
+    "AnjanaYasodhaSureshSantosh": "https://www.messenger.com/e2ee/t/1595472291528180/",
+    "Santosh": "https://www.messenger.com/e2ee/t/7807929559273698",
+    "SantoshYasodha": "https://www.messenger.com/e2ee/t/974591568661526",
 }
 
 # ==========================================
@@ -54,7 +54,7 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
         ["✅ Status",      "👤 Who Am I"],
     ],
     resize_keyboard=True,
-    persistent=True,
+    is_persistent=True,
 )
 
 # ==========================================
@@ -69,6 +69,25 @@ def allowed(update: Update):
         return False
 
     return user.id == ALLOWED_USER_ID
+
+
+# ==========================================
+# POST INIT
+# ==========================================
+
+async def post_init(application):
+
+    await application.bot.set_my_commands([
+        BotCommand("start",      "Start the bot"),
+        BotCommand("call",       "Call someone"),
+        BotCommand("screenshot", "Take a screenshot"),
+        BotCommand("volume",     "Set volume"),
+        BotCommand("open",       "Open a URL"),
+        BotCommand("tabs",       "Show Chrome tabs"),
+        BotCommand("clear",      "Close Chrome"),
+        BotCommand("status",     "Bot status"),
+        BotCommand("whoami",     "Your Telegram ID"),
+    ])
 
 
 # ==========================================
@@ -449,7 +468,12 @@ def main():
     if not ALLOWED_USER_ID:
         raise ValueError("ALLOWED_USER_ID not found in .env file")
 
-    app = Application.builder().token(BOT_TOKEN).build()
+    app = (
+        Application.builder()
+        .token(BOT_TOKEN)
+        .post_init(post_init)
+        .build()
+    )
 
     # Commands
     app.add_handler(CommandHandler("start", start))
