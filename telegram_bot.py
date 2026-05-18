@@ -5,10 +5,10 @@ import pygetwindow as gw
 
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume,ISimpleAudioVolume
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from dotenv import load_dotenv
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, MenuButtonCommands
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -37,10 +37,25 @@ CHROME_PATH = (
 # ==========================================
 
 CONTACTS = {
-    "YasodhaSantosh": "https://www.messenger.com/e2ee/t/974591568661526",
-    "Santosh": "https://www.messenger.com/e2ee/t/7807929559273698",
-    "SureshAnjanaYasodhaSantosh": "https://www.messenger.com/e2ee/t/1595472291528180/",
+    "Mom": "https://m.me/mom.profile",
+    "Dad": "https://m.me/dad.profile",
+    "John": "https://messenger.com/t/john.profile",
 }
+
+# ==========================================
+# REPLY KEYBOARD
+# ==========================================
+
+MAIN_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ["📞 Call",        "📸 Screenshot"],
+        ["🔊 Volume",      "🌐 Open URL"],
+        ["🗂 Tabs",        "🗑 Clear Chrome"],
+        ["✅ Status",      "👤 Who Am I"],
+    ],
+    resize_keyboard=True,
+    persistent=True,
+)
 
 # ==========================================
 # SECURITY
@@ -63,15 +78,8 @@ def allowed(update: Update):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-        "✅ Bot running.\n\n"
-        "/whoami\n"
-        "/call\n"
-        "/open <url>\n"
-        "/tabs\n"
-        "/screenshot\n"
-        "/volume <0-100>\n"
-        "/clear\n"
-        "/status"
+        "✅ Bot running. Choose a command below.",
+        reply_markup=MAIN_KEYBOARD
     )
 
 
@@ -84,9 +92,9 @@ async def whoami(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     if user:
-
         await update.message.reply_text(
-            f"Your Telegram ID:\n{user.id}"
+            f"Your Telegram ID:\n{user.id}",
+            reply_markup=MAIN_KEYBOARD
         )
 
 
@@ -135,30 +143,20 @@ async def call_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================
-# HANDLE NORMAL MESSAGE
-# ==========================================
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if not allowed(update):
-        return
-
-
-# ==========================================
 # OPEN URL
 # ==========================================
 
 async def open_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not allowed(update):
-
         await update.message.reply_text("Not allowed.")
         return
 
     if len(context.args) == 0:
-
+        context.user_data["waiting_for_url"] = True
         await update.message.reply_text(
-            "Usage:\n/open google.com"
+            "Send the URL you want to open.",
+            reply_markup=MAIN_KEYBOARD
         )
         return
 
@@ -168,20 +166,16 @@ async def open_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
         url = "https://" + url
 
     try:
-
-        subprocess.Popen(
-            [CHROME_PATH, url],
-            shell=False
-        )
-
+        subprocess.Popen([CHROME_PATH, url], shell=False)
         await update.message.reply_text(
-            f"Opened:\n{url}"
+            f"Opened:\n{url}",
+            reply_markup=MAIN_KEYBOARD
         )
 
     except Exception as e:
-
         await update.message.reply_text(
-            f"Error:\n{e}"
+            f"Error:\n{e}",
+            reply_markup=MAIN_KEYBOARD
         )
 
 
@@ -192,7 +186,6 @@ async def open_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def tabs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not allowed(update):
-
         await update.message.reply_text("Not allowed.")
         return
 
@@ -203,16 +196,14 @@ async def tabs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chrome_tabs = []
 
         for w in windows:
-
             title = w.title.strip()
-
             if title and "Chrome" in title:
                 chrome_tabs.append(title)
 
         if not chrome_tabs:
-
             await update.message.reply_text(
-                "No Chrome tabs found."
+                "No Chrome tabs found.",
+                reply_markup=MAIN_KEYBOARD
             )
             return
 
@@ -221,12 +212,15 @@ async def tabs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for i, tab in enumerate(chrome_tabs, start=1):
             text += f"{i}. {tab}\n"
 
-        await update.message.reply_text(text)
+        await update.message.reply_text(
+            text,
+            reply_markup=MAIN_KEYBOARD
+        )
 
     except Exception as e:
-
         await update.message.reply_text(
-            f"Error:\n{e}"
+            f"Error:\n{e}",
+            reply_markup=MAIN_KEYBOARD
         )
 
 
@@ -254,9 +248,9 @@ async def screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.remove(file_path)
 
     except Exception as e:
-
         await update.message.reply_text(
-            f"Error:\n{e}"
+            f"Error:\n{e}",
+            reply_markup=MAIN_KEYBOARD
         )
 
 
@@ -271,7 +265,11 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if len(context.args) == 0:
-        await update.message.reply_text("Usage:\n/volume 50")
+        context.user_data["waiting_for_volume"] = True
+        await update.message.reply_text(
+            "Send the volume level (0-100).",
+            reply_markup=MAIN_KEYBOARD
+        )
         return
 
     try:
@@ -303,11 +301,16 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_text(
-            f"Volume set to {level}%"
+            f"Volume set to {level}%",
+            reply_markup=MAIN_KEYBOARD
         )
 
     except Exception as e:
-        await update.message.reply_text(f"Error:\n{e}")
+        await update.message.reply_text(
+            f"Error:\n{e}",
+            reply_markup=MAIN_KEYBOARD
+        )
+
 
 # ==========================================
 # CLEAR
@@ -316,22 +319,20 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not allowed(update):
-
         await update.message.reply_text("Not allowed.")
         return
 
     try:
-
         os.system("taskkill /F /IM chrome.exe")
-
         await update.message.reply_text(
-            "Closed all Chrome windows."
+            "Closed all Chrome windows.",
+            reply_markup=MAIN_KEYBOARD
         )
 
     except Exception as e:
-
         await update.message.reply_text(
-            f"Error:\n{e}"
+            f"Error:\n{e}",
+            reply_markup=MAIN_KEYBOARD
         )
 
 
@@ -342,13 +343,98 @@ async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not allowed(update):
-
         await update.message.reply_text("Not allowed.")
         return
 
     await update.message.reply_text(
-        "✅ Telegram bot is running and connected."
+        "✅ Telegram bot is running and connected.",
+        reply_markup=MAIN_KEYBOARD
     )
+
+
+# ==========================================
+# HANDLE NORMAL MESSAGE
+# ==========================================
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not allowed(update):
+        return
+
+    text = update.message.text.strip()
+
+    # Handle reply keyboard buttons
+    if text == "📞 Call":
+        await call(update, context)
+        return
+
+    if text == "📸 Screenshot":
+        await screenshot(update, context)
+        return
+
+    if text == "🔊 Volume":
+        context.user_data["waiting_for_volume"] = True
+        await update.message.reply_text(
+            "Send the volume level (0-100).",
+            reply_markup=MAIN_KEYBOARD
+        )
+        return
+
+    if text == "🌐 Open URL":
+        context.user_data["waiting_for_url"] = True
+        await update.message.reply_text(
+            "Send the URL you want to open.",
+            reply_markup=MAIN_KEYBOARD
+        )
+        return
+
+    if text == "🗂 Tabs":
+        await tabs(update, context)
+        return
+
+    if text == "🗑 Clear Chrome":
+        await clear(update, context)
+        return
+
+    if text == "✅ Status":
+        await status(update, context)
+        return
+
+    if text == "👤 Who Am I":
+        await whoami(update, context)
+        return
+
+    # Handle waiting states
+    if context.user_data.get("waiting_for_volume"):
+        context.user_data["waiting_for_volume"] = False
+        try:
+            level = int(text)
+            context.args = [str(level)]
+            await volume(update, context)
+        except ValueError:
+            await update.message.reply_text(
+                "Please send a number between 0 and 100.",
+                reply_markup=MAIN_KEYBOARD
+            )
+        return
+
+    if context.user_data.get("waiting_for_url"):
+        context.user_data["waiting_for_url"] = False
+        url = text
+        if not url.startswith("http"):
+            url = "https://" + url
+        try:
+            subprocess.Popen([CHROME_PATH, url], shell=False)
+            await update.message.reply_text(
+                f"Opened:\n{url}",
+                reply_markup=MAIN_KEYBOARD
+            )
+        except Exception as e:
+            await update.message.reply_text(
+                f"Error:\n{e}",
+                reply_markup=MAIN_KEYBOARD
+            )
+        return
 
 
 # ==========================================
