@@ -73,6 +73,15 @@ def wake_computer():
     time.sleep(1.5)
 
 
+def screensaver_active():
+    SPI_GETSCREENSAVERRUNNING = 0x0072
+    running = ctypes.c_bool(False)
+    ctypes.windll.user32.SystemParametersInfoW(
+        SPI_GETSCREENSAVERRUNNING, 0, ctypes.byref(running), 0
+    )
+    return running.value
+
+
 # ==========================================
 # SECURITY
 # ==========================================
@@ -397,8 +406,10 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Not allowed.")
         return
 
+    screen = "🔒 Screensaver is ON" if screensaver_active() else "🖥️ Screen is active"
+
     await update.message.reply_text(
-        "✅ Telegram bot is running and connected.",
+        f"✅ Telegram bot is running and connected.\n{screen}",
         reply_markup=MAIN_KEYBOARD
     )
 
