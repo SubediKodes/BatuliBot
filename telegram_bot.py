@@ -69,7 +69,10 @@ def wake_computer():
     ctypes.windll.kernel32.SetThreadExecutionState(
         ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
     )
-    pyautogui.press("escape")
+    # Send a low-level mouse move event — reaches the screensaver directly
+    MOUSEEVENTF_MOVE = 0x0001
+    ctypes.windll.user32.mouse_event(MOUSEEVENTF_MOVE, 1, 0, 0, 0)
+    ctypes.windll.user32.mouse_event(MOUSEEVENTF_MOVE, -1, 0, 0, 0)
     time.sleep(1.5)
 
 
