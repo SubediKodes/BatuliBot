@@ -64,15 +64,13 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
 # ==========================================
 
 def wake_computer():
-    # Prevent display from sleeping and nudge mouse to dismiss screensaver
     ES_SYSTEM_REQUIRED  = 0x00000001
     ES_DISPLAY_REQUIRED = 0x00000002
     ctypes.windll.kernel32.SetThreadExecutionState(
         ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
     )
-    x, y = pyautogui.position()
-    pyautogui.moveTo(x + 1, y + 1, duration=0.1)
-    pyautogui.moveTo(x, y, duration=0.1)
+    pyautogui.press("escape")
+    time.sleep(1.5)
 
 
 # ==========================================
@@ -284,7 +282,6 @@ async def screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     wake_computer()
-    time.sleep(1.5)
 
     try:
 
