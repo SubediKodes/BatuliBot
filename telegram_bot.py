@@ -281,8 +281,6 @@ async def screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Not allowed.")
         return
 
-    wake_computer()
-
     try:
 
         file_path = os.path.join(os.environ["TEMP"], "screenshot.png")
