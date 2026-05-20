@@ -54,7 +54,6 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
         ["📞 Call",        "🔊 Volume"],
         ["🌐 Open URL",    "🗂 Tabs"],
         ["🗑 Clear Chrome","✅ Status"],
-        ["👤 Who Am I"],
     ],
     resize_keyboard=True,
     is_persistent=True,
@@ -453,10 +452,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text == "✅ Status":
         await status(update, context)
-        return
-
-    if text == "👤 Who Am I":
-        await whoami(update, context)
         return
 
     # Handle waiting states
