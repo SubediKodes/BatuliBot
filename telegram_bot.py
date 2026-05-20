@@ -2,6 +2,7 @@ import os
 import subprocess
 import ctypes
 import time
+import asyncio
 import pyautogui
 import pygetwindow as gw
 
@@ -83,6 +84,13 @@ def screensaver_active():
         SPI_GETSCREENSAVERRUNNING, 0, ctypes.byref(running), 0
     )
     return running.value
+
+
+async def launch_url(url):
+    subprocess.Popen([CHROME_PATH, "--start-fullscreen", url], shell=False)
+    if "youtube.com" in url or "youtu.be" in url:
+        await asyncio.sleep(4)
+        pyautogui.press("k")
 
 
 # ==========================================
@@ -190,7 +198,7 @@ async def call_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     wake_computer()
 
     try:
-        subprocess.Popen([CHROME_PATH, link], shell=False)
+        await launch_url(link)
         await query.edit_message_text(f"📞 Calling {name}...")
 
     except Exception as e:
@@ -223,7 +231,7 @@ async def open_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     wake_computer()
 
     try:
-        subprocess.Popen([CHROME_PATH, url], shell=False)
+        await launch_url(url)
         await update.message.reply_text(
             f"Opened:\n{url}",
             reply_markup=MAIN_KEYBOARD
@@ -490,7 +498,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             url = "https://" + url
         wake_computer()
         try:
-            subprocess.Popen([CHROME_PATH, url], shell=False)
+            await launch_url(url)
             await update.message.reply_text(
                 f"Opened:\n{url}",
                 reply_markup=MAIN_KEYBOARD
