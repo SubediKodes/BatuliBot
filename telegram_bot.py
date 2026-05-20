@@ -1,6 +1,7 @@
 import os
 import subprocess
 import ctypes
+import time
 import pyautogui
 import pygetwindow as gw
 
@@ -283,6 +284,7 @@ async def screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     wake_computer()
+    time.sleep(1.5)
 
     try:
 
