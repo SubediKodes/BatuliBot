@@ -51,10 +51,10 @@ CONTACTS = {
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        ["📞 Call",        "📸 Screenshot"],
-        ["🔊 Volume",      "🌐 Open URL"],
-        ["🗂 Tabs",        "🗑 Clear Chrome"],
-        ["✅ Status",      "👤 Who Am I"],
+        ["📞 Call",        "🔊 Volume"],
+        ["🌐 Open URL",    "🗂 Tabs"],
+        ["🗑 Clear Chrome","✅ Status"],
+        ["👤 Who Am I"],
     ],
     resize_keyboard=True,
     is_persistent=True,
@@ -114,15 +114,14 @@ def allowed(update: Update):
 async def post_init(application):
 
     await application.bot.set_my_commands([
-        BotCommand("start",      "Start the bot"),
-        BotCommand("call",       "Call someone"),
-        BotCommand("screenshot", "Take a screenshot"),
-        BotCommand("volume",     "Set volume"),
-        BotCommand("open",       "Open a URL"),
-        BotCommand("tabs",       "Show Chrome tabs"),
-        BotCommand("clear",      "Close Chrome"),
-        BotCommand("status",     "Bot status"),
-        BotCommand("whoami",     "Your Telegram ID"),
+        BotCommand("start",   "Start the bot"),
+        BotCommand("call",    "Call someone"),
+        BotCommand("volume",  "Set volume"),
+        BotCommand("open",    "Open a URL"),
+        BotCommand("tabs",    "Show Chrome tabs"),
+        BotCommand("clear",   "Close Chrome"),
+        BotCommand("status",  "Bot status + screenshot"),
+        BotCommand("whoami",  "Your Telegram ID"),
     ])
 
     await application.bot.send_message(
@@ -292,36 +291,6 @@ async def tabs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================
-# SCREENSHOT
-# ==========================================
-
-async def screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if not allowed(update):
-        await update.message.reply_text("Not allowed.")
-        return
-
-    try:
-
-        file_path = os.path.join(os.environ["TEMP"], "screenshot.png")
-
-        image = pyautogui.screenshot()
-
-        image.save(file_path)
-
-        with open(file_path, "rb") as f:
-            await update.message.reply_photo(photo=f)
-
-        os.remove(file_path)
-
-    except Exception as e:
-        await update.message.reply_text(
-            f"Error:\n{e}",
-            reply_markup=MAIN_KEYBOARD
-        )
-
-
-# ==========================================
 # VOLUME
 # ==========================================
 
@@ -418,11 +387,28 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     screen = "🔒 Screensaver is ON" if screensaver_active() else "🖥️ Screen is active"
+    caption = f"✅ Telegram bot is running and connected.\n{screen}"
 
-    await update.message.reply_text(
-        f"✅ Telegram bot is running and connected.\n{screen}",
-        reply_markup=MAIN_KEYBOARD
-    )
+    try:
+
+        file_path = os.path.join(os.environ["TEMP"], "screenshot.png")
+
+        pyautogui.screenshot().save(file_path)
+
+        with open(file_path, "rb") as f:
+            await update.message.reply_photo(
+                photo=f,
+                caption=caption,
+                reply_markup=MAIN_KEYBOARD,
+            )
+
+        os.remove(file_path)
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"{caption}\n\nScreenshot error: {e}",
+            reply_markup=MAIN_KEYBOARD,
+        )
 
 
 # ==========================================
@@ -439,10 +425,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Handle reply keyboard buttons
     if text == "📞 Call":
         await call(update, context)
-        return
-
-    if text == "📸 Screenshot":
-        await screenshot(update, context)
         return
 
     if text == "🔊 Volume":
@@ -536,7 +518,6 @@ def main():
     app.add_handler(CommandHandler("call", call))
     app.add_handler(CommandHandler("open", open_url))
     app.add_handler(CommandHandler("tabs", tabs))
-    app.add_handler(CommandHandler("screenshot", screenshot))
     app.add_handler(CommandHandler("volume", volume))
     app.add_handler(CommandHandler("clear", clear))
     app.add_handler(CommandHandler("status", status))
