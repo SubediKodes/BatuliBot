@@ -54,10 +54,43 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
         ["📞 Call",        "🔊 Volume"],
         ["🌐 Open URL",    "🗂 Tabs"],
         ["🗑 Clear Chrome","✅ Status"],
+        ["⌨️ Keys"],
     ],
     resize_keyboard=True,
     is_persistent=True,
 )
+
+KEYS_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ["⬅️",    "⬆️",       "⬇️",    "➡️"],
+        ["⏮",    "⏯",       "⏭"],
+        ["🔇",    "🔉",       "🔊"],
+        ["Esc",  "Enter",   "Space"],
+        ["Win",  "Tab",     "F5"],
+        ["🔙 Back"],
+    ],
+    resize_keyboard=True,
+    is_persistent=True,
+)
+
+KEY_MAP = {
+    "⬅️":    "left",
+    "⬆️":    "up",
+    "⬇️":    "down",
+    "➡️":    "right",
+    "⏮":    "prevtrack",
+    "⏯":    "playpause",
+    "⏭":    "nexttrack",
+    "🔇":    "volumemute",
+    "🔉":    "volumedown",
+    "🔊":    "volumeup",
+    "Esc":   "escape",
+    "Enter": "enter",
+    "Space": "space",
+    "Win":   "win",
+    "Tab":   "tab",
+    "F5":    "f5",
+}
 
 # ==========================================
 # WAKE COMPUTER
@@ -120,6 +153,7 @@ async def post_init(application):
         BotCommand("tabs",    "Show Chrome tabs"),
         BotCommand("clear",   "Close Chrome"),
         BotCommand("status",  "Bot status + screenshot"),
+        BotCommand("key",     "Send a keypress"),
         BotCommand("whoami",  "Your Telegram ID"),
     ])
 
@@ -411,6 +445,22 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================
+# KEY
+# ==========================================
+
+async def key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not allowed(update):
+        await update.message.reply_text("Not allowed.")
+        return
+
+    await update.message.reply_text(
+        "Choose a key to press.",
+        reply_markup=KEYS_KEYBOARD,
+    )
+
+
+# ==========================================
 # HANDLE NORMAL MESSAGE
 # ==========================================
 
@@ -452,6 +502,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text == "✅ Status":
         await status(update, context)
+        return
+
+    if text == "⌨️ Keys":
+        await key(update, context)
+        return
+
+    if text == "🔙 Back":
+        await update.message.reply_text(
+            "Main menu.",
+            reply_markup=MAIN_KEYBOARD,
+        )
+        return
+
+    if text in KEY_MAP:
+        wake_computer()
+        pyautogui.press(KEY_MAP[text])
+        await update.message.reply_text(
+            f"Pressed: {text}",
+            reply_markup=KEYS_KEYBOARD,
+        )
         return
 
     # Handle waiting states
@@ -516,6 +586,7 @@ def main():
     app.add_handler(CommandHandler("volume", volume))
     app.add_handler(CommandHandler("clear", clear))
     app.add_handler(CommandHandler("status", status))
+    app.add_handler(CommandHandler("key", key))
 
     # Callback handler for call buttons
     app.add_handler(CallbackQueryHandler(call_callback, pattern="^call_"))
